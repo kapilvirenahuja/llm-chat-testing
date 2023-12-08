@@ -4,6 +4,7 @@ from tqdm import tqdm
 from trafilatura.sitemaps import sitemap_search
 from trafilatura import fetch_url, extract, extract_metadata
 
+
 def get_urls_from_sitemap(sitemap_url: str) -> list:
     # Get sitemap and urls
     urls = sitemap_search(sitemap_url)

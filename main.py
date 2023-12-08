@@ -1,8 +1,9 @@
 import pandas as pd
+import os
 
 from langchain.vectorstores import FAISS
 
-def load_dataset(dataset_name: str = "dataset.cvs"):
+def load_dataset(dataset_name: str = "dataset.csv"):
     """ 
     helper function to load dataset from the filesystem. this must be a CSV file
       Args:
@@ -10,7 +11,16 @@ def load_dataset(dataset_name: str = "dataset.cvs"):
         Returns:
             pandas dataframe
     """
-    pass
+
+    data_dir = "./data/"
+    file_path = os.path.join(data_dir, dataset_name)
+    df = pd.read_csv(file_path)
+    return df
+
+
+from langchain.document_loaders import DataFrameLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
 
 
 def create_chunks(dataset: pd.DataFrame, chunk_size: int, chunk_overlap: int) -> list:
@@ -23,7 +33,29 @@ def create_chunks(dataset: pd.DataFrame, chunk_size: int, chunk_overlap: int) ->
         Returns:
             list of chunks
     """
-    pass
+
+    text_chunks = DataFrameLoader(
+        dataset, page_content_column = "body"
+        ).load_and_split(
+            text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size = chunk_size,
+                chunk_overlap = chunk_overlap,
+                length_function = len
+            )
+        )
+
+    # we add metadata to the chunks themselves to facilitate retreival
+    for chunk in text_chunks:
+        title = chunk.metadata["title"]
+        description = chunk.metadata["description"]
+        content = chunk.page_content
+        url = chunk.metadata["url"]
+        final_text = f"TITLE: {title}\DESCRIPTION: {description}\BODY: {content}\nURL: {url}"
+        chunk.page_content = final_text
+
+    return text_chunks
+
+
 
 def get_vector_store(chunks: list) -> FAISS:
     """ 
@@ -48,6 +80,8 @@ def get_conversational_chain(vector_store: FAISS, human_message: str, system_mes
     pass
 
 def main():
+    dataset = load_dataset()
+    chunks = create_chunks(dataset, 1000, 0)
     pass
 
 if __name__ == "__main__":
